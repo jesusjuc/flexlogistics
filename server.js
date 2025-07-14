@@ -43,7 +43,5 @@ app.get('/pedidos', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Flete Xpress escuchando en el puerto ${PORT}`);
 });
-app.listen(PORT, () => {
-    console.log(`✅ Flete Xpress escuchando en el puerto ${PORT}`);
-  });
+
   
