@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
-const PORT = process.env.PORT || 3000; // ESTA ES LA CLAVE
+const PORT = process.env.PORT; // ✔️ así de simple
 
 app.use(cors());
 app.use(express.json());
