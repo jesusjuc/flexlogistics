@@ -6,35 +6,32 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware general
 app.use(cors());
+app.use(express.json()); // Para requests JSON normales
+app.use(express.raw({ type: 'application/json' })); // Para Webhooks de Shopify
 
-// Variable temporal para almacenar pedidos entrantes por webhook
 const pedidosRecibidos = [];
 
-// Función para construir URL de Shopify
 const apiURL = (path = '') =>
   `https://${process.env.SHOP_DOMAIN}/admin/api/2024-04${path}`;
 
-// Encabezados para autenticar con Shopify
 const headers = {
   'X-Shopify-Access-Token': process.env.SHOP_TOKEN,
   'Content-Type': 'application/json',
 };
 
-// Obtener ubicación activa
 async function firstLocationId() {
   const { data } = await axios.get(apiURL('/locations.json'), { headers });
   if (!data.locations.length) throw new Error('Sin ubicaciones activas');
   return data.locations[0].id;
 }
 
-// Endpoint principal
+// 🌐 Verificación rápida de estado
 app.get('/', (req, res) => {
   res.send('🚚 Backend de Flete Xpress funcionando correctamente.');
 });
 
-// Endpoint para obtener todos los pedidos
+// 📦 Obtener todos los pedidos
 app.get('/orders', async (_req, res) => {
   try {
     const { data } = await axios.get(apiURL('/orders.json?status=any'), { headers });
@@ -45,7 +42,7 @@ app.get('/orders', async (_req, res) => {
   }
 });
 
-// Endpoint para obtener pedido por ID
+// 🔎 Obtener pedido por ID
 app.get('/orders/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -57,7 +54,7 @@ app.get('/orders/:id', async (req, res) => {
   }
 });
 
-// Endpoint para cambiar estado de pedido
+// 🚦 Cambiar estado del pedido
 app.post('/orders/:id/status', async (req, res) => {
   const { id } = req.params;
   const { estado } = req.body;
@@ -81,7 +78,7 @@ app.post('/orders/:id/status', async (req, res) => {
       }, { headers });
 
       foData = await axios.get(apiURL(`/orders/${id}/fulfillment_orders.json`), { headers });
-      fo = foData.data.fulfillment_orders[0];
+      fo = foData.fulfillment_orders[0];
     }
 
     const lines = fo.line_items.map(l => ({ id: l.id, quantity: l.quantity }));
@@ -136,8 +133,8 @@ app.post('/orders/:id/status', async (req, res) => {
   }
 });
 
-// ✅ Webhook para pedidos de Shopify (usa .raw SOLO en esta ruta)
-app.post('/webhook/pedidos', express.raw({ type: 'application/json' }), (req, res) => {
+// 📥 Webhook para nuevos pedidos desde Shopify
+app.post('/webhook/pedidos', (req, res) => {
   try {
     const payload = JSON.parse(req.body.toString());
     console.log('✅ Webhook recibido');
@@ -151,12 +148,12 @@ app.post('/webhook/pedidos', express.raw({ type: 'application/json' }), (req, re
   }
 });
 
-// Ver pedidos guardados desde el webhook
+// 👀 Ver pedidos guardados desde webhook
 app.get('/pedidos', (req, res) => {
   res.json(pedidosRecibidos);
 });
 
-// Lanzar servidor
+// 🚀 Lanzar servidor
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Flete Xpress escuchando en el puerto ${PORT}`);
 });
