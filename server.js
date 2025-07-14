@@ -20,10 +20,6 @@ const headers = {
   'Content-Type': 'application/json',
 };
 
-app.get('/', (req, res) => {
-  res.send('🟢 Backend de Flete Xpress funcionando correctamente.');
-});
-
 app.post('/webhook/pedidos', (req, res) => {
   try {
     const payload = JSON.parse(req.body.toString());
