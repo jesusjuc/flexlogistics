@@ -6,20 +6,23 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware general
 app.use(cors());
-app.use(express.json()); // Para requests JSON normales
-app.use(express.raw({ type: 'application/json' })); // Para Webhooks de Shopify
 
+// Variable temporal para almacenar pedidos entrantes por webhook
 const pedidosRecibidos = [];
 
+// Función para construir URL de Shopify
 const apiURL = (path = '') =>
   `https://${process.env.SHOP_DOMAIN}/admin/api/2024-04${path}`;
 
+// Encabezados para autenticar con Shopify
 const headers = {
   'X-Shopify-Access-Token': process.env.SHOP_TOKEN,
   'Content-Type': 'application/json',
 };
 
+// Obtener ubicación activa
 async function firstLocationId() {
   const { data } = await axios.get(apiURL('/locations.json'), { headers });
   if (!data.locations.length) throw new Error('Sin ubicaciones activas');
@@ -31,7 +34,7 @@ app.get('/', (req, res) => {
   res.send('🚚 Backend de Flete Xpress funcionando correctamente.');
 });
 
-// Obtener todos los pedidos
+// Endpoint para obtener todos los pedidos
 app.get('/orders', async (_req, res) => {
   try {
     const { data } = await axios.get(apiURL('/orders.json?status=any'), { headers });
@@ -42,7 +45,7 @@ app.get('/orders', async (_req, res) => {
   }
 });
 
-// Obtener pedido por ID
+// Endpoint para obtener pedido por ID
 app.get('/orders/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -54,7 +57,7 @@ app.get('/orders/:id', async (req, res) => {
   }
 });
 
-// Cambiar estado del pedido
+// Endpoint para cambiar estado de pedido
 app.post('/orders/:id/status', async (req, res) => {
   const { id } = req.params;
   const { estado } = req.body;
@@ -133,8 +136,8 @@ app.post('/orders/:id/status', async (req, res) => {
   }
 });
 
-// Webhook para pedidos
-app.post('/webhook/pedidos', (req, res) => {
+// ✅ Webhook para pedidos de Shopify (usa .raw SOLO en esta ruta)
+app.post('/webhook/pedidos', express.raw({ type: 'application/json' }), (req, res) => {
   try {
     const payload = JSON.parse(req.body.toString());
     console.log('✅ Webhook recibido');
@@ -148,29 +151,12 @@ app.post('/webhook/pedidos', (req, res) => {
   }
 });
 
-// Ver pedidos guardados
+// Ver pedidos guardados desde el webhook
 app.get('/pedidos', (req, res) => {
   res.json(pedidosRecibidos);
 });
 
 // Lanzar servidor
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Flete Xpress escuchando en el puerto ${PORT}`);
-  });  
-app.post('/webhook', async (req, res) => {
-    try {
-      const pedido = req.body;
-  
-      // Puedes guardar el pedido recibido donde desees
-      console.log('Pedido recibido desde Shopify:', pedido);
-  
-      // También podrías almacenarlo en un array temporal
-      pedidosRecibidos.push(pedido);
-  
-      res.status(200).send('Webhook recibido correctamente.');
-    } catch (error) {
-      console.error('Error procesando webhook:', error);
-      res.status(500).send('Error interno al procesar webhook.');
-    }
-  });
-  
+  console.log(`✅ Flete Xpress escuchando en el puerto ${PORT}`);
+});
