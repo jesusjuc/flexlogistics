@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json()); // Para requests JSON normales
@@ -157,3 +157,20 @@ app.get('/pedidos', (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅  Flete Xpress escuchando en http://localhost:${PORT}`);
 });
+app.post('/webhook', async (req, res) => {
+    try {
+      const pedido = req.body;
+  
+      // Puedes guardar el pedido recibido donde desees
+      console.log('Pedido recibido desde Shopify:', pedido);
+  
+      // También podrías almacenarlo en un array temporal
+      pedidosRecibidos.push(pedido);
+  
+      res.status(200).send('Webhook recibido correctamente.');
+    } catch (error) {
+      console.error('Error procesando webhook:', error);
+      res.status(500).send('Error interno al procesar webhook.');
+    }
+  });
+  
