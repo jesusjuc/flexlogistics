@@ -39,7 +39,10 @@ app.post('/webhook/pedidos', (req, res) => {
 app.get('/pedidos', (req, res) => {
   res.json(pedidosRecibidos);
 });
-
+app.get('/', (req, res) => {
+    res.send('Flete Xpress backend funcionando correctamente.');
+  });
+  
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Flete Xpress escuchando en el puerto ${PORT}`);
 });
