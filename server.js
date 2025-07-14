@@ -4,11 +4,11 @@ const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000; // ESTA ES LA CLAVE
 
 app.use(cors());
-app.use(express.json()); // Para requests JSON normales
-app.use(express.raw({ type: 'application/json' })); // Para Webhooks de Shopify
+app.use(express.json());
+app.use(express.raw({ type: 'application/json' }));
 
 const pedidosRecibidos = [];
 
@@ -20,12 +20,10 @@ const headers = {
   'Content-Type': 'application/json',
 };
 
-// Verificación de estado
 app.get('/', (req, res) => {
   res.send('🟢 Backend de Flete Xpress funcionando correctamente.');
 });
 
-// Webhook para pedidos
 app.post('/webhook/pedidos', (req, res) => {
   try {
     const payload = JSON.parse(req.body.toString());
@@ -38,12 +36,10 @@ app.post('/webhook/pedidos', (req, res) => {
   }
 });
 
-// Ver pedidos guardados
 app.get('/pedidos', (req, res) => {
   res.json(pedidosRecibidos);
 });
 
-// Lanzar servidor
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Flete Xpress escuchando en el puerto ${PORT}`);
 });
