@@ -24,16 +24,17 @@ app.get('/ping', (req, res) => {
 });
 
 app.post('/webhook/pedidos', (req, res) => {
-  try {
-    const payload = JSON.parse(req.body.toString());
-    console.log('✅ Pedido recibido vía webhook:', payload);
-    pedidosRecibidos.push(payload);
-    res.status(200).send('Webhook recibido.');
-  } catch (error) {
-    console.error('❌ Error al procesar el webhook:', error);
-    res.status(400).send('Error al procesar');
-  }
-});
+    try {
+      const payload = req.body; // ✅ Ya es un objeto
+      console.log('✅ Pedido recibido vía webhook:', payload);
+      pedidosRecibidos.push(payload);
+      res.status(200).send('Webhook recibido.');
+    } catch (error) {
+      console.error('❌ Error al procesar el webhook:', error);
+      res.status(400).send('Error al procesar');
+    }
+  });
+  
 
 app.get('/pedidos', (req, res) => {
   res.json(pedidosRecibidos);
