@@ -44,4 +44,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Flete Xpress escuchando en el puerto ${PORT}`);
 });
 
+app.get('/ping', (req, res) => {
+    res.status(200).send('pong');
+  });
   
