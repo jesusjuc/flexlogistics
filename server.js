@@ -76,10 +76,12 @@ app.post('/cambiar-a-preparado', async (req, res) => {
   
       res.json({ ok: true, fulfillResult });
   
-    } catch (error) {
-      console.error("Error en el endpoint:", error);
-      res.status(500).json({ error: 'Error al actualizar la orden.' });
-    }
+    } catch (err) {
+        console.error("❌ Error inesperado:", err.message);
+        console.error(err); // muestra toda la traza
+        res.status(500).json({ error: "Error al actualizar la orden: " + err.message });
+      }
+      
   });
   
   
