@@ -9,87 +9,59 @@ app.use(cors());
 app.use(express.json());
 app.use(express.json({ type: 'application/json' }));
 app.post('/cambiar-a-preparado', async (req, res) => {
-    const { order_id } = req.body;
-  
-    if (!order_id) {
-      return res.status(400).json({ error: 'Falta el ID de la orden.' });
-    }
+    const orderId = req.body.order_id;
+    const shop = 'gpk0pd-1y.myshopify.com';
+    const token = process.env.SHOPIFY_ACCESS_TOKEN;
   
     try {
-      console.log("Recibida solicitud para cambiar a preparado, ID:", order_id);
-  
-      // 1. Consultar orden
-      const ordenCruda = await fetch(`https://${process.env.SHOP_DOMAIN}/admin/api/2025-07/orders/${order_id}.json`, {
+      // 1. Obtener fulfillment_order_id desde Shopify
+      const fulfillmentOrderResp = await fetch(`https://${shop}/admin/api/2023-10/orders/${orderId}/fulfillment_orders.json`, {
+        method: 'GET',
         headers: {
-          'X-Shopify-Access-Token': process.env.SHOP_TOKEN,
-          'Content-Type': 'application/json',
-        },
+          'X-Shopify-Access-Token': token,
+          'Content-Type': 'application/json'
+        }
       });
-      const orden = await ordenCruda.json();
-      console.log("Estado de la orden:", orden.financial_status, orden.fulfillment_status);
-      console.log("Orden recibida:", orden);
   
-      if (!orden || !orden.order) {
-        console.log("❌ No se pudo obtener la orden desde Shopify:", orden);
-        return res.status(404).json({ error: 'Orden no encontrada en Shopify.' });
-      }
-      
-      if (orden.order.financial_status !== 'paid') {
-        console.log("⛔ La orden no está pagada:", orden.order.financial_status);
-        return res.status(400).json({ error: 'La orden aún no está pagada.' });
-            
+      const fulfillmentData = await fulfillmentOrderResp.json();
+      console.log("Fulfillment orders:", fulfillmentData);
+  
+      if (!fulfillmentData.fulfillment_orders || fulfillmentData.fulfillment_orders.length === 0) {
+        return res.status(400).json({ error: "No se encontró fulfillment_order_id." });
       }
   
-      const fulfillmentCrudo = await fetch(`https://${process.env.SHOP_DOMAIN}/admin/api/2025-07/orders/${order_id}/fulfillment_orders.json`, {
-        headers: {
-          'X-Shopify-Access-Token': process.env.SHOP_TOKEN,
-          'Content-Type': 'application/json',
-        },
-      });
-      const fulfillmentData = await fulfillmentCrudo.json();
-      console.log("Fulfillment Orders:", fulfillmentData);
+      const fulfillmentOrderId = fulfillmentData.fulfillment_orders[0].id;
   
-      const fulfillment_order_id = fulfillmentData.fulfillment_orders?.[0]?.id;
-      if (!fulfillment_order_id) {
-        return res.status(400).json({ error: 'No se encontró fulfillment_order_id.' });
-      }
-  
-      // Crear el fulfillment
-      const fulfillResponse = await fetch(`https://${process.env.SHOP_DOMAIN}/admin/api/2025-07/fulfillments.json`, {
+      // 2. Enviar el fulfillment (marcar como preparado)
+      const fulfillmentResp = await fetch(`https://${shop}/admin/api/2023-10/fulfillments.json`, {
         method: 'POST',
         headers: {
-          'X-Shopify-Access-Token': process.env.SHOP_TOKEN,
-          'Content-Type': 'application/json',
+          'X-Shopify-Access-Token': token,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           fulfillment: {
-            message: "Pedido preparado por Flex Logistics",
-            notify_customer: true,
-            tracking_info: {
-              number: null,
-              url: null
-            },
+            message: "Preparado por Flex Logistics",
+            notify_customer: false,
             line_items_by_fulfillment_order: [
               {
-                fulfillment_order_id
+                fulfillment_order_id: fulfillmentOrderId
               }
             ]
           }
-        }),
+        })
       });
   
-      const fulfillResult = await fulfillResponse.json();
-      console.log("Resultado fulfillment:", fulfillResult);
+      const fulfillmentResult = await fulfillmentResp.json();
+      console.log("Resultado del fulfillment:", fulfillmentResult);
   
-      res.json({ ok: true, fulfillResult });
+      res.json({ mensaje: "Orden marcada como preparada", fulfillment: fulfillmentResult });
   
-    } catch (err) {
-        console.error("❌ Error inesperado:", err.message);
-        console.error(err); // muestra toda la traza
-        res.status(500).json({ error: "Error al actualizar la orden: " + err.message });
-      }
-      
-  });
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).json({ error: "Error en el servidor." });
+    }
+  });  
   
   
 
