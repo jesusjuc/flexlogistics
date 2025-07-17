@@ -13,6 +13,7 @@ app.use(express.json());
 const SHOP_DOMAIN = process.env.SHOP_DOMAIN;
 const SHOP_TOKEN = process.env.SHOP_TOKEN;
 const pedidosRecibidos = [];
+const locationId = SHOP_LOCATION_ID;
 
 // ✅ Ruta de prueba
 app.get('/', (req, res) => {
