@@ -52,6 +52,66 @@ app.post('/cambiar-a-preparado', async (req, res) => {
         })
       });
   
+      app.post('/forzar-preparado', async (req, res) => {
+        const orderId = req.body.order_id;
+        const shop = 'gpk0pd-1y.myshopify.com';
+        const token = process.env.SHOPIFY_ACCESS_TOKEN;
+      
+        try {
+          // 1. Obtener detalles completos de la orden
+          const orderResp = await fetch(`https://${shop}/admin/api/2023-10/orders/${orderId}.json`, {
+            method: 'GET',
+            headers: {
+              'X-Shopify-Access-Token': token,
+              'Content-Type': 'application/json'
+            }
+          });
+      
+          const orderData = await orderResp.json();
+          const order = orderData.order;
+      
+          // Verifica que haya line_items y location_id
+          if (!order || !order.line_items || order.line_items.length === 0) {
+            return res.status(400).json({ error: "No se encontraron artículos en la orden." });
+          }
+      
+          if (!order.location_id) {
+            return res.status(400).json({ error: "No se encontró location_id en la orden." });
+          }
+      
+          const lineItems = order.line_items.map(item => ({
+            id: item.id,
+            quantity: item.quantity
+          }));
+      
+          // 2. Crear fulfillment directo con line_items y location_id
+          const fulfillResp = await fetch(`https://${shop}/admin/api/2023-10/fulfillments.json`, {
+            method: 'POST',
+            headers: {
+              'X-Shopify-Access-Token': token,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              fulfillment: {
+                location_id: order.location_id,
+                message: "Forzado por Flex Logistics",
+                notify_customer: false,
+                line_items: lineItems
+              }
+            })
+          });
+      
+          const result = await fulfillResp.json();
+          console.log("Fulfillment forzado:", result);
+      
+          res.status(200).json({ mensaje: "Fulfillment forzado con éxito", fulfillment: result });
+      
+        } catch (error) {
+          console.error("Error forzando fulfillment:", error);
+          res.status(500).json({ error: "Error interno del servidor." });
+        }
+      });
+      
       const fulfillmentResult = await fulfillmentResp.json();
       console.log("Resultado del fulfillment:", fulfillmentResult);
   
