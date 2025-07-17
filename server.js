@@ -114,9 +114,11 @@ app.post('/forzar-preparado', async (req, res) => {
       return res.status(400).json({ error: "No se encontraron artículos en la orden." });
     }
 
-    if (!order.location_id) {
-      return res.status(400).json({ error: "No se encontró location_id en la orden." });
+    const location_id = process.env.SHOP_LOCATION_ID;
+    if (!location_id) {
+      return res.status(400).json({ error: "No hay location_id configurado." });
     }
+    
 
     const lineItems = order.line_items.map(item => ({
       id: item.id,
