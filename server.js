@@ -122,7 +122,7 @@ app.post('/forzar-preparado', async (req, res) => {
       id: item.id,
       quantity: item.quantity
     }));
-
+    const locationId = 1234567890; // ← Usa tu valor real de ubicación
     const fulfillResp = await fetch(`https://${SHOP_DOMAIN}/admin/api/2023-10/fulfillments.json`, {
       method: 'POST',
       headers: {
