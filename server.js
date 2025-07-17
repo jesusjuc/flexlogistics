@@ -26,6 +26,7 @@ app.post('/cambiar-a-preparado', async (req, res) => {
         },
       });
       const orden = await ordenCruda.json();
+      console.log("Estado de la orden:", orden.financial_status, orden.fulfillment_status);
       console.log("Orden recibida:", orden);
   
       if (!orden || !orden.order) {
