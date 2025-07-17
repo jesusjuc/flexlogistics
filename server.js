@@ -28,9 +28,15 @@ app.post('/cambiar-a-preparado', async (req, res) => {
       const orden = await ordenCruda.json();
       console.log("Orden recibida:", orden);
   
+      if (!orden || !orden.order) {
+        console.log("❌ No se pudo obtener la orden desde Shopify:", orden);
+        return res.status(404).json({ error: 'Orden no encontrada en Shopify.' });
+      }
+      
       if (orden.order.financial_status !== 'paid') {
-        console.log("La orden no está pagada:", orden.order.financial_status);
-        return res.status(400).json({ error: 'La orden no está pagada.' });
+        console.log("⛔ La orden no está pagada:", orden.order.financial_status);
+        return res.status(400).json({ error: 'La orden aún no está pagada.' });
+            
       }
   
       const fulfillmentCrudo = await fetch(`https://${process.env.SHOP_DOMAIN}/admin/api/2025-07/orders/${order_id}/fulfillment_orders.json`, {
